@@ -442,6 +442,17 @@ def initialize():
             state['startingBalance'] = state['currentTotalBalance']
             log_debug(f"No open position found for pair {pair}, using default state")
 
+        # Read telegram API variables from our environment
+        telegram_app_id = str(os.environ.get('telegram_app_id'))
+        if telegram_app_id == 'None':
+            log_error('telegram_app_id environment variable not found, exiting')
+            quit()
+        
+        telegram_app_hash = str(os.environ.get('telegram_app_hash'))
+        if telegram_app_hash == 'None':
+            log_error('telegram_app_hash environment variable not found, exiting')
+            quit()
+            
         # Setup the telegram bot
         # TODO - Implement this...
 
