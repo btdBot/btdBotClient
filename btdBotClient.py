@@ -350,7 +350,6 @@ def initialize():
             log_debug('Using default values for bot config')
 
         # Capture initial enableTrading value and force it to False
-        # This will allow us to run our historical data through our bot logic without triggering trades
         originalEnableTrading = config['enableTrading']
         config['enableTrading'] = False
 
