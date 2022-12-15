@@ -1,4 +1,4 @@
-# Copyright 2022 Sandy Pyke
+# Copyright 2022 Sandy Pyke - spyke@btdbot.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License")
 # with the “Commons Clause” License Condition v1.0 (the Condition);
