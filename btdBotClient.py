@@ -27,6 +27,7 @@ import time
 import json
 import math
 from telethon import TelegramClient
+from telethon.events import NewMessage
 from telethon.errors import SessionPasswordNeededError
 
 from dydx3 import Client as dydx3_client
@@ -457,7 +458,6 @@ def initialize():
             
         # Setup the telegram bot
         telegram_api = TelegramClient(settings['bot_short_name'], app_id, app_hash)
-        telegram_api.start()
 
         # Restore our enable_trading value
         config['enable_trading'] = original_enable_trading
@@ -480,9 +480,26 @@ try:
     #log_debug("Running unit tests")
     #state['bot_run'] = False
 
+    # Register our new message handler
+    @telegram_api.on(NewMessage)
+    async def my_event_handler(event):
+        msg_text = event.raw_text
+        msg_chat = await event.get_chat()
+        msg_sender = await event.get_sender()
+        msg_chat_id = event.chat_id
+        msg_sender_id = event.sender_id
+        log_debug('Recieved a new message:')
+        log_debug(f"msg_text = {msg_text}")
+        log_debug(f"msg_chat = {msg_chat}")
+        log_debug(f"msg_sender = {msg_sender}")
+        log_debug(f"msg_chat_id = {msg_chat_id}")
+        log_debug(f"msg_sender_id = {msg_sender_id}")
+
     # Loop until we are done
     while(state['bot_run']):
-        time.sleep(1)
+        telegram_api.start()
+        telegram_api.run_until_disconnected()
+        log_debug('Detected telegram_api disconnect - restarting')
         
 except KeyboardInterrupt:
     print()
