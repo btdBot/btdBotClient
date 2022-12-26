@@ -64,6 +64,10 @@ settings = {
     # Make sure environment variables match selected network...
     #'dydx_network' : 'mainnet',
     'dydx_network' : 'testnet',
+
+    # Our desired IDs
+    'chat_id' : -1001552279905,
+    'bot_id' : 5861320113,
 }
 
 ### File names ###
@@ -470,6 +474,152 @@ def initialize():
         log_error(e)
         state['bot_run'] == False
 
+def parse_trade_message(msg_text):
+
+    # Parses the chat message and returns the requested order details
+    # Will return None if it can't parse the passed message
+
+    # Do some formating on the passed message
+    msg = str(msg_text).strip().upper()
+
+    # Make sure our message has our seperation character
+    if not ',' in msg:
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Message does not include comma seperators, ignoring')
+        return None
+    
+    # Split our message into its parts
+    msg_parts = str(msg).split(sep=',')
+
+    # Make sure we got the right number of parts
+    if not len(msg_parts) == 3:
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Message does not have the right number of parts, ignoring')
+        return None
+
+    # Extract our message parts
+    msg_timestamp = str(msg_parts[0]).strip()
+    msg_buy_order = str(msg_parts[1]).strip()
+    msg_sell_order = str(msg_parts[2]).strip()
+
+    # Make sure our buy order starts with BUY
+    if not msg_buy_order.startswith('BUY'):
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part does not start with BUY, ignoring')
+        return None
+
+    # Make sure our buy order contains our part seperator
+    if not msg_buy_order.contains(' '):
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part does not include multiple parts, ignoring')
+        return None
+
+    buy_parts = msg_buy_order.split(' ')
+    
+    # Make sure our buy order has the right number of parts
+    if not len(buy_parts) == 5:
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part does not have the right number of parts, ignoring')
+        return None
+
+    # Extract our buy parts
+    msg_buy_command = str(buy_parts[0]).strip()
+    msg_buy_pair = str(buy_parts[1]).strip()
+    msg_buy_count = str(buy_parts[2]).strip()
+    msg_buy_of = str(buy_parts[3]).strip()
+    msg_buy_total = str(buy_parts[4]).strip()
+    
+    # Make sure we start with the command
+    if not msg_buy_command == 'BUY':
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part does not start with BUY, ignoring')
+        return None
+
+    # Make sure we are dealing with a supported pair
+    if not msg_buy_pair == 'BTC_USD':
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part does not include seported pair, ignoring')
+        return None
+
+    # Make sure the part between our numbers is the right one
+    if not msg_buy_of == 'OF':
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part number seperator incorrect, ignoring')
+        return None
+
+    # Make sure we got order numbers
+    if not msg_buy_count.isnumeric() and not msg_buy_total.isnumeric():
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part count or total are not numbers, ignoring')
+        return None
+
+    # Make sure our count is less than or equal to our total
+    if msg_buy_count > msg_buy_total:
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Second part count is greater than total, ignoring')
+        return None
+
+    # Make sure our sell order starts with SELL
+    if not msg_sell_order.startswith('SELL'):
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Third part does not start with SELL, ignoring')
+        return None
+    
+    # Make sure our sell order contains our part seperator
+    if not msg_sell_order.contains(' '):
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Third part does not include multiple parts, ignoring')
+        return None
+
+    sell_parts = msg_buy_order.split(' ')
+    
+    # Make sure our sell order has the right number of parts
+    if not len(sell_parts) == 3:
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Third part does not have the right number of parts, ignoring')
+        return None
+
+    # Extract our buy parts
+    msg_sell_command = str(sell_parts[0]).strip()
+    msg_sell_at = str(sell_parts[1]).strip()
+    msg_sell_price = str(sell_parts[2]).strip()
+    
+    # Make sure we start with the command
+    if not msg_sell_command == 'SELL':
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Third part does not start with SELL, ignoring')
+        return None
+
+    # Make sure the part between our command and price is the right one
+    if not msg_sell_at == '@':
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Third part seperator incorrect, ignoring')
+        return None
+
+    # Make sure we our price value
+    if not msg_sell_price.isnumeric():
+        log_debug(f"Failed to parse trade message : {msg}")
+        log_debug('Third part price is not a number, ignoring')
+        return None
+
+    # Build up our response
+    order = {
+        'pair' : msg_buy_pair,
+        'buy_count' : msg_buy_count,
+        'buy_total' : msg_buy_total,
+        'sell_price' : msg_sell_price,
+    }
+
+    return order
+
+def process_order(order):
+
+    # Processes a buy / sell order request
+    
+    # TODO - Implement this...
+
+    pass
+
 ### Main loop ###
 
 try:
@@ -477,23 +627,27 @@ try:
     initialize()
     
     # Unit tests
-    #log_debug("Running unit tests")
-    #state['bot_run'] = False
+    log_debug("Running unit tests")
+    parse_trade_message(' Test ')
+    parse_trade_message('1,2')
+    parse_trade_message('1, 2, 3')
+    parse_trade_message('1,BUY,EXIT')
+    parse_trade_message('2022-11-22T14:00:00Z, BUY BTC-USD 5 of 8, SELL @ 18698')
+    state['bot_run'] = False
 
     # Register our new message handler
     @telegram_api.on(NewMessage)
     async def my_event_handler(event):
+        # Extrace message details
         msg_text = event.raw_text
-        msg_chat = await event.get_chat()
-        msg_sender = await event.get_sender()
         msg_chat_id = event.chat_id
         msg_sender_id = event.sender_id
-        log_debug('Recieved a new message:')
-        log_debug(f"msg_text = {msg_text}")
-        log_debug(f"msg_chat = {msg_chat}")
-        log_debug(f"msg_sender = {msg_sender}")
-        log_debug(f"msg_chat_id = {msg_chat_id}")
-        log_debug(f"msg_sender_id = {msg_sender_id}")
+        
+        # Handle messages that we are interested in
+        if msg_chat_id == settings['chat_id'] and msg_sender_id == settings['bot_id']:
+            order = parse_trade_message(msg_text)
+            if not order == None:
+                process_order(order)
 
     # Loop until we are done
     while(state['bot_run']):
