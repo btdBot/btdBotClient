@@ -602,7 +602,7 @@ def parse_trade_message(msg_text):
         log_debug('Third part price is not a number, ignoring')
         return None
 
-    # Build up our response
+    # Build up our response and return it
     order = {
         'pair' : msg_buy_pair,
         'buy_count' : msg_buy_count,
@@ -614,7 +614,12 @@ def parse_trade_message(msg_text):
 
 def process_order(order):
 
-    # Processes a buy / sell order request
+    # Processes a buy / sell order request, the passed order should contain the following:
+    #
+    # pair = The pair to be traded
+    # buy_count = The count of this current buy order
+    # buy_total = The maximum number of buy orders expected
+    # sell_price = Limit order price at which to take profit
     
     # TODO - Implement this...
 
